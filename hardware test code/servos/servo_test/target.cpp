@@ -6,7 +6,6 @@ Description: Library for running individual targets
 #include "target.h"
 #include "Arduino.h"
 
-// Target constructor
 Target::Target(int pin)
 {
   servo_pin = pin;
@@ -14,14 +13,12 @@ Target::Target(int pin)
   flipped_forward = false;
 }
 
-// Initializes target servo to face backward
 void Target::init_target(void)
 {
   servo.attach(servo_pin);
   servo.write(0);
 }
 
-//Turns target servo to face forward and gets time of turn
 void Target::flip_forward(void)
 {
   servo.write(180);
@@ -29,15 +26,12 @@ void Target::flip_forward(void)
   flipped_forward = true;
 }
 
-//Turns target servo to face forward
 void Target::flip_backward(void)
 {
   servo.write(0);
   flipped_forward = false;
 }
 
-//Checks if the desired time has passed after turning the target forward
-//Returns: true = time done, false = time remaining
 bool Target::turn_time_elapsed(unsigned long des_delay)
 {
   if((millis()-turn_time_millis) >= des_delay) {
@@ -45,11 +39,9 @@ bool Target::turn_time_elapsed(unsigned long des_delay)
   } else {
     return false;
   }
-
+  
 }
 
-//Checks if the target is facing flip_forward
-//Returns: true: forward, false = backward
 bool Target::is_flipped_forward(void)
 {
   return flipped_forward;

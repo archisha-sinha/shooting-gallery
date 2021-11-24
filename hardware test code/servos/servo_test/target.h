@@ -18,13 +18,13 @@ class Target
     void flip_backward(void);
     bool turn_time_elapsed(unsigned long des_delay);
     bool is_flipped_forward(void);
-
+    
   private:
     Servo servo;
     int servo_pin;
     unsigned long int turn_time_millis;
     bool flipped_forward;
-
+    
 };
 
 #endif _TARGET_H
