@@ -11,7 +11,7 @@ void loop() {
   if(photo1.getPhotoresistorHitStatus()){
     Serial.println("Target Hit");
     delay(2000);
-    photo1.setPhotoresistorState(PHOTO_ACTIVE);
+    photo1.setPhotoresistorState(PHOTO_UNACTIVE);
   } else {
     Serial.println("Target Not Hit");
   }
