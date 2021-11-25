@@ -124,7 +124,7 @@
 //
 //									expType, rs[,rw],en,d4,d5,d6,d7[,bl, blLevel]
 #include <SoftwareWire.h>
-SoftwareWire Wire1(2, 3);
+SoftwareWire Wire1(2, 4);
 
 #define I2Cexp_BOARD_LCDXIO        I2Cexp_PCF8574, 4,5,6,0,1,2,3 // ElectroFun default (no backlight control)
 #define I2Cexp_BOARD_LCDXIOnBL     I2Cexp_PCF8574, 4,5,6,0,1,2,3,7,LOW // Electrofun & PNP transistor for BL
