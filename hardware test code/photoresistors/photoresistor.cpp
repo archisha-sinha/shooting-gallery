@@ -1,12 +1,16 @@
 #include "photoresistor.h"
 #include "Arduino.h"
 
-Photoresistor::Photoresistor(int pin)
+Photoresistor::Photoresistor()
 {
-	pin = pin;
 	pinVal = analogRead(pin);
 	Photoresistor_active = false;
 	Photoresistor_hit = false;
+}
+
+void Photoresistor::setPin(int pin)
+{
+	pin = pin;
 }
 
 //Pass either Photoresistor_ACTIVE or Photoresistor_UNACTIVE
