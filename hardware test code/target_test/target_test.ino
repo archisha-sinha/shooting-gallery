@@ -21,7 +21,7 @@ void loop() {
       Serial.println("Hit!");
     }
   } else {
-    delay(1000);
+    delay(2000);
     target.flip_forward();
   }
 }
