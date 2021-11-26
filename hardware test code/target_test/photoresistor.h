@@ -19,7 +19,7 @@ class Photoresistor
 		int pin;
 		int pinVal;
 		bool Photoresistor_active;
-		bool Photoresistor_hit;
+    bool Photoresistor_hit;
 };
 
 

@@ -9,7 +9,8 @@
 class Photoresistor
 {
 	public:
-		Photoresistor(int pin);
+		Photoresistor();
+		void setPin(int pin);
 		void setPhotoresistorState(bool PhotoresistorState);
 		bool getPhotoresistorState();
 		bool getPhotoresistorHitStatus();
