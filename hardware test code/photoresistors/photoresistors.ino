@@ -1,20 +1,35 @@
-#include "photoresistor.h"
+//#include <Servo.h>
+//#include "photoresistor.h"
+//
+//Photoresistor photo1(A0);
+//Servo servo1;
+//
+//void setup() {
+//  Serial.begin(9600);
+//  photo1.setPhotoresistorState(PHOTO_ACTIVE);
+//  servo1.attach(9);
+//  servo1.write(0);
+//}
+//
+//void loop() {
+//  if(photo1.getPhotoresistorHitStatus()){
+//    Serial.println("Target Hit");
+//    servo1.write(180);
+//    delay(2000);
+//    servo1.write(0);
+//    photo1.setPhotoresistorState(PHOTO_ACTIVE);
+//  } else {
+//    Serial.println(analogRead(A0));
+//  }
+//}
 
-Photoresistor photo1(A0);
 
 void setup() {
   Serial.begin(9600);
-  photo1.setPhotoresistorState(PHOTO_ACTIVE);
 }
 
 void loop() {
-  if(photo1.getPhotoresistorHitStatus()){
-    Serial.println("Target Hit");
-    delay(2000);
-    photo1.setPhotoresistorState(PHOTO_ACTIVE);
-  } else {
-    Serial.println("Target Not Hit");
-  }
+  Serial.println(analogRead(A0));
 }
 
 /*
