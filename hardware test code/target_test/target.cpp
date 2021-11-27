@@ -8,9 +8,9 @@ Description: Library for running individual targets
 #include "Arduino.h"
 
 // Target constructor
-Target::Target(int servoPin, int photoPin)
+Target::Target(int servoPin, uint8_t pin, ADS1115 *ads, int ads_active)
 {
-	photo.setPin(photoPin);
+	photo.initPhotoresistor(pin, ads, ads_active); 
   servo_pin = servoPin;
   turn_time_millis = 0;
   flipped_forward = false;
@@ -54,7 +54,7 @@ bool Target::turn_time_elapsed(unsigned long des_delay)
 
 bool Target::target_hit(void)
 {
-	return photo.getPhotoresistorHitStatus();
+	return photo.getPhotoresistorLitStatus();
 }
 
 //Checks if the target is facing flip_forward

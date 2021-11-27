@@ -13,16 +13,16 @@ Description: Library for running individual targets
 class Target
 {
   public:
-    Target(int servoPin, int photoPin);
+    Photoresistor photo;
+    Target(int servoPin, uint8_t pin, ADS1115 *ads, int ads_active);
     void init_target(void);
     void flip_forward(void);
     void flip_backward(void);
     bool turn_time_elapsed(unsigned long des_delay);
     bool is_flipped_forward(void);
 		bool target_hit(void);
-
+    
   private:
-		Photoresistor photo;
     Servo servo;
     int servo_pin;
     unsigned long int turn_time_millis;
