@@ -22,8 +22,8 @@ bool Ping::is_distance_good(int desired_distance)
     distance_inch = prev_distance;
   }
   prev_distance = distance_inch;
-  Serial.print("Distance = ");
-  Serial.print(distance_inch);
+//  Serial.print("Distance = ");
+//  Serial.print(distance_inch);
   if(distance_inch < desired_distance) return false;
   return true;
 }

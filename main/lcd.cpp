@@ -30,6 +30,7 @@ void LCD::start_screen(void)
   lcd.setCursor(0, 2);
   lcd.print("INSERT COIN TO PLAY");
   delay(2000);
+  //Show high scores for all modes as well
 }
 
 void LCD::mode_select_screen(int curr_adc_mode)
