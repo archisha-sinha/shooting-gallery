@@ -8,7 +8,7 @@
 #include "ping.h"
 #include "target.h"
 
-/***** D E F I N E S *****/
+/********** D E F I N E S **********/
 #define MCP_ADDR 0x20 //gpio expander address
 
 //Button pin on gpio expander
@@ -19,7 +19,7 @@
 #define EASY_RANGE 500
 #define HARD_RANGE 1023
 
-/***** E N U M S *****/
+/********** E N U M S **********/
 enum Mode
 {
   easy = 0, 
@@ -39,19 +39,26 @@ enum States
 };
 States curr_state = idle;
 
-/***** V A R I A B L E S *****/
-//Private variables
+/********** V A R I A B L E S **********/
+/***** Private variables *****/
 uint8_t gpio_read = 0;
 
 //Arrays for mode specific values, index arrays with curr_mode enum
 int mode_target_forward_time[2] = {5000, 3000}; //Time = 5000ms for easy, 3000ms for hard
 int mode_player_distance_inch[2] = {12, 24}; //Distance = 12in for easy, 24in for hard
 
+//Timing flags
 int standby_turn_flag = 0;
 int standby_turn_time = 0;
 int mode_select_time = 0;
 
-// Initialize all classes
+//Gameplay timing flags and variables
+long randNum = 0;
+int curr_score = 0;
+int time_left = 0;
+int prev_sec = 0;
+
+/***** Initialize all classes *****/
 MCP23017 mcp = MCP23017(MCP_ADDR);
 Ping ping(13);
 LCD lcd(20, 4);
@@ -68,13 +75,16 @@ Target target6(11, ADS1115_MUX_AIN1_GND, &ads1115_2, 3000);
 
 Photoresistor coin_photo;
 
-/***** F U N C T I O N S   D E F I N I T I O N S *****/
+/********** F U N C T I O N S   D E F I N I T I O N S **********/
 void mcp_init(void);
+void target_led_reset(void);
+void target_led_on(Target t);
+void target_led_off(void);
 bool is_estop_pressed(void);
 bool is_start_pressed(void);
 int check_mode(void);
 
-/***** M A I N *****/
+/***** M A I N **********/
 void setup() {
   Serial.begin(9600);
 
@@ -107,11 +117,13 @@ void setup() {
   target4.flip_backward();
   target5.flip_backward();
   target6.flip_backward();
+
+  randomSeed(analogRead(A0));
 }
 
 void loop() {
   if(is_estop_pressed()) {
-    curr_mode = emergency_stop;
+    curr_state = emergency_stop;
   }
   
   switch(curr_state){
@@ -126,7 +138,8 @@ void loop() {
         target6.flip_forward();
         standby_turn_flag = 1;
         standby_turn_time = millis();
-      } else if(standby_turn_flag && (millis() - standby_turn_time >= 10000)) {
+      } 
+      else if(standby_turn_flag && (millis() - standby_turn_time >= 10000)) {
         target1.flip_backward();
         target2.flip_backward();
         target3.flip_backward();
@@ -136,8 +149,7 @@ void loop() {
         standby_turn_flag = 0;
       }
 
-      if(coin_photo.readADS1115() < 2700) 
-      {
+      if(coin_photo.readADS1115() < 2700) {
         target1.flip_backward();
         target2.flip_backward();
         target3.flip_backward();
@@ -148,7 +160,8 @@ void loop() {
         
         curr_state = mode_select;
         mode_select_time = millis();
-      } else {
+      } 
+      else {
         curr_state = idle;
       }
       break;
@@ -156,13 +169,15 @@ void loop() {
     case mode_select:
       if(millis() - mode_select_time >= 10000) {
         curr_state = set_distance;
-      } else {
+      } 
+      else {
         curr_mode = check_mode();
   //      lcd.mode_select_screen(curr_mode);
   
         if(is_start_pressed()) {
           curr_state = set_distance;
-        } else {
+        } 
+        else {
           curr_state = mode_select;
         }
       }
@@ -170,20 +185,136 @@ void loop() {
       
     case set_distance:
       bool distance_status = ping.is_distance_good(mode_target_forward_time[curr_mode]);
-      lcd.distance_set_screen(curr_mode, distance_status);
+//      lcd.distance_set_screen(curr_mode, distance_status);
       
-      if (distance_status){
+      if (distance_status) {
+        time_left = 60;
+        prev_sec = millis();
         curr_state = play;
-      } else {
+      } 
+      else {
         curr_state = set_distance;
       }
       break;
       
     case play:
+      if(time_left > 0) {
+        target_led_off();
+        if(millis() - prev_sec >= 1000) {
+          prev_sec = millis();
+          time_left--;
+          lcd.game_play_screen(time_left, curr_score);
+        }
+        randNum = random(63);
+
+        if((randNum & 1) && !target1.is_flipped_forward()) {
+          target1.flip_forward();  
+        } 
+        else if(target1.is_flipped_forward()) {
+            if(target1.turn_time_elapsed(mode_target_forward_time[curr_mode])) {
+              target1.flip_backward();
+            } 
+            else if(target1.target_hit()) {
+              target1.flip_backward();
+              target_led_on(target1);
+              curr_score++;
+            }
+        }
+
+        if((randNum>>1 & 1) && !target2.is_flipped_forward()) {
+          target2.flip_forward();  
+        } 
+        else if(target2.is_flipped_forward()) {
+            if(target2.turn_time_elapsed(mode_target_forward_time[curr_mode])) {
+              target2.flip_backward();
+            } 
+            else if(target2.target_hit()) {
+              target2.flip_backward();
+              target_led_on(target1);
+              curr_score++;
+            }
+        }
+
+        if((randNum>>1 & 1) && !target2.is_flipped_forward()) {
+          target2.flip_forward();  
+        } 
+        else if(target2.is_flipped_forward()) {
+            if(target2.turn_time_elapsed(mode_target_forward_time[curr_mode])) {
+              target2.flip_backward();
+            } 
+            else if(target2.target_hit()) {
+              target2.flip_backward();
+              target_led_on(target2);
+              curr_score++;
+            }
+        }
+
+        if((randNum>>2 & 1) && !target3.is_flipped_forward()) {
+          target3.flip_forward();  
+        } 
+        else if(target3.is_flipped_forward()) {
+            if(target3.turn_time_elapsed(mode_target_forward_time[curr_mode])) {
+              target3.flip_backward();
+            } 
+            else if(target3.target_hit()) {
+              target3.flip_backward();
+              target_led_on(target3);
+              curr_score++;
+            }
+        }
+
+        if((randNum>>3 & 1) && !target4.is_flipped_forward()) {
+          target4.flip_forward();  
+        } 
+        else if(target4.is_flipped_forward()) {
+            if(target4.turn_time_elapsed(mode_target_forward_time[curr_mode])) {
+              target4.flip_backward();
+            } 
+            else if(target4.target_hit()) {
+              target4.flip_backward();
+              target_led_on(target4);
+              curr_score++;
+            }
+        }
+
+        if((randNum>>4 & 1) && !target5.is_flipped_forward()) {
+          target5.flip_forward();  
+        } 
+        else if(target5.is_flipped_forward()) {
+            if(target5.turn_time_elapsed(mode_target_forward_time[curr_mode])) {
+              target5.flip_backward();
+            } 
+            else if(target5.target_hit()) {
+              target5.flip_backward();
+              target_led_on(target5);
+              curr_score++;
+            }
+        }
+
+        if((randNum>>5 & 1) && !target6.is_flipped_forward()) {
+          target6.flip_forward();  
+        } 
+        else if(target6.is_flipped_forward()) {
+            if(target6.turn_time_elapsed(mode_target_forward_time[curr_mode])) {
+              target6.flip_backward();
+            } 
+            else if(target6.target_hit()) {
+              target6.flip_backward();
+              target_led_on(target6);
+              curr_score++;
+            }
+        }
+      }
+      else if(time_left == 0) {
+        lcd.end_game_screen(curr_score);
+        curr_state = end_game;
+      }
       break;
       
     case end_game:
-      
+      target_led_reset();
+      lcd.post_game_screen(curr_score, curr_mode);
+      curr_state = idle;
       break;
       
     case emergency_stop:
@@ -192,7 +323,7 @@ void loop() {
   }
 }
 
-/***** F U N C T I O N S   D E C L A R A T I O N S *****/
+/********** F U N C T I O N S   D E C L A R A T I O N S **********/
 void mcp_init(void)
 {
   mcp.init();
@@ -205,11 +336,44 @@ void mcp_init(void)
 
 }
 
-//void target_led_on(uint8_t binary_targets) {
-//  mcp.writeRegister(MCP23017Register::GPIO_A, binary_targets);
-//  //set flag for each led turned on
-//  //call target_led_off after time has passed based on flag
-//}
+void target_led_reset(void)
+{
+  mcp.writeRegister(MCP23017Register::GPIO_A, 0x00);
+}
+
+void target_led_on(Target t) 
+{
+  mcp.digitalWrite(t.get_gpio_led_pin(), LED_ON);
+  t.set_target_led(LED_ON);
+}
+
+void target_led_off(void) 
+{
+  if(target1.led_turn_off_ok()) {
+    mcp.digitalWrite(target1.get_gpio_led_pin(), LED_OFF);
+    target1.set_target_led(LED_OFF);
+  }
+  if(target2.led_turn_off_ok()) {
+    mcp.digitalWrite(target2.get_gpio_led_pin(), LED_OFF);
+    target2.set_target_led(LED_OFF);
+  }
+  if(target3.led_turn_off_ok()) {
+    mcp.digitalWrite(target3.get_gpio_led_pin(), LED_OFF);
+    target3.set_target_led(LED_OFF);
+  }
+  if(target4.led_turn_off_ok()) {
+    mcp.digitalWrite(target4.get_gpio_led_pin(), LED_OFF);
+    target4.set_target_led(LED_OFF);
+  }
+  if(target5.led_turn_off_ok()) {
+    mcp.digitalWrite(target5.get_gpio_led_pin(), LED_OFF);
+    target5.set_target_led(LED_OFF);
+  }
+  if(target6.led_turn_off_ok()) {
+    mcp.digitalWrite(target6.get_gpio_led_pin(), LED_OFF);
+    target6.set_target_led(LED_OFF);
+  }
+}
 
 bool is_estop_pressed(void)
 {

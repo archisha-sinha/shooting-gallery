@@ -63,3 +63,22 @@ bool Target::is_flipped_forward(void)
 {
   return flipped_forward;
 }
+
+int Target::get_gpio_led_pin(void) {
+  return gpio_led_pin;
+}
+
+void Target::set_target_led(int led_status)
+{
+  led_on_flag = led_status;
+  led_on_time = millis();
+}
+
+bool Target::led_turn_off_ok(void) {
+  if((millis() - led_on_time >= 1000) && led_on_flag) {
+    return true;
+  }
+  else {
+    return false;
+  }
+}

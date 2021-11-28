@@ -102,6 +102,7 @@ void LCD::end_game_screen(int curr_score)
   delay(500);
   lcd.setCursor(5, 3);
   lcd.print("GAME OVER");
+  delay(1000);
 }
 
 void LCD::post_game_screen(int curr_score, int curr_adc_mode)
