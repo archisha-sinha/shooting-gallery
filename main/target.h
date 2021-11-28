@@ -17,7 +17,7 @@ class Target
 {
   public:
     Photoresistor photo;
-    Target(int servoPin, uint8_t pin, ADS1115 *ads, int ads_active);
+    Target(int servoPin, uint8_t pin, ADS1115 *ads, int ads_active, int led_pin);
     void init_target(void);
     void flip_forward(void);
     void flip_backward(void);

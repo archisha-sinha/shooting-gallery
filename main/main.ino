@@ -66,12 +66,12 @@ LCD lcd(20, 4);
 ADS1115 ads1115_1 = ADS1115(ADS1115_I2C_ADDR_GND);
 ADS1115 ads1115_2 = ADS1115(ADS1115_I2C_ADDR_VDD);
 
-Target target1(3, ADS1115_MUX_AIN0_GND, &ads1115_1, 3000);
-Target target2(5, ADS1115_MUX_AIN1_GND, &ads1115_1, 3000);
-Target target3(6, ADS1115_MUX_AIN2_GND, &ads1115_1, 3000);
-Target target4(9, ADS1115_MUX_AIN3_GND, &ads1115_1, 3000);
-Target target5(10, ADS1115_MUX_AIN0_GND, &ads1115_2, 3000);
-Target target6(11, ADS1115_MUX_AIN1_GND, &ads1115_2, 3000);
+Target target1(3, ADS1115_MUX_AIN0_GND, &ads1115_1, 3000, 0);
+Target target2(5, ADS1115_MUX_AIN1_GND, &ads1115_1, 3000, 1);
+Target target3(6, ADS1115_MUX_AIN2_GND, &ads1115_1, 3000, 2);
+Target target4(9, ADS1115_MUX_AIN3_GND, &ads1115_1, 3000, 3);
+Target target5(10, ADS1115_MUX_AIN0_GND, &ads1115_2, 3000, 4);
+Target target6(11, ADS1115_MUX_AIN1_GND, &ads1115_2, 3000, 5);
 
 Photoresistor coin_photo;
 

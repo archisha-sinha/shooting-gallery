@@ -8,12 +8,13 @@ Description: Library for running individual targets
 #include "Arduino.h"
 
 // Target constructor
-Target::Target(int servoPin, uint8_t pin, ADS1115 *ads, int ads_active)
+Target::Target(int servoPin, uint8_t pin, ADS1115 *ads, int ads_active, int led_pin)
 {
 	photo.initPhotoresistor(pin, ads, ads_active); 
   servo_pin = servoPin;
   turn_time_millis = 0;
   flipped_forward = false;
+  gpio_led_pin = led_pin;
 }
 
 // Initializes target servo to face backward
@@ -22,6 +23,7 @@ void Target::init_target(void)
   servo.attach(servo_pin);
   servo.write(0);
 	photo.setPhotoresistorState(PHOTO_ACTIVE);
+  led_on_flag = 0;
 }
 
 //Turns target servo to face forward and gets time of turn
