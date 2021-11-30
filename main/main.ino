@@ -49,8 +49,8 @@ int mode_player_distance_inch[2] = {12, 24}; //Distance = 12in for easy, 24in fo
 
 //Timing flags
 int standby_turn_flag = 0;
-int standby_turn_time = 0;
-int mode_select_time = 0;
+long standby_turn_time = 0;
+long mode_select_time = 0;
 int press_flag = 0;
 
 //Gameplay timing flags and variables
@@ -128,7 +128,7 @@ void loop() {
     Serial.println("e-stop");
     curr_state = emergency_stop;
   }
-  
+  Serial.println(curr_state);
   switch(curr_state)
   {
     case idle:
@@ -174,6 +174,7 @@ void loop() {
         press_flag = 0;
         curr_state = mode_select;
         mode_select_time = millis();
+        if(millis() < mode_select_time) mode_select_time = millis();
         lcd.clear_screen();
       }
     break;
@@ -182,12 +183,12 @@ void loop() {
       Serial.println("mode select");
       Serial.println(check_mode());
       if(millis() - mode_select_time >= 10000) {
-      curr_state = set_distance;
+        curr_state = set_distance;
       } 
       else {
         curr_mode = check_mode();
         lcd.mode_select_screen(curr_mode);
-        
+        Serial.println(is_start_pressed());
         if(is_start_pressed()) {
           press_flag = 1;
           Serial.println("pressed");
@@ -339,6 +340,7 @@ void loop() {
         lcd.post_game_screen(curr_score, curr_mode);
       } else {
         press_flag = 0;
+        mode_select_time = 0;
         curr_state = idle;
         target1.flip_backward();
         target2.flip_backward();
@@ -346,8 +348,7 @@ void loop() {
         target4.flip_backward();
         target5.flip_backward();
         target6.flip_backward();
-        standby_turn_flag = 0;
-        standby_turn_time = millis();
+        lcd.start_screen();
       }
     break;
     
