@@ -17,25 +17,30 @@ void LCD::lcd_init(void)
   lcd.begin(disp_col, disp_row);
 }
 
+void LCD::clear_screen(void)
+{
+  lcd.clear();
+}
+
 void LCD::start_screen(void) 
 {
   lcd.clear();
-  delay(100);
+  //delay(100);
   lcd.setCursor(3, 0);
   lcd.print("ZOMBIE ");
-  delay(500);
+  //delay(500);
   lcd.setCursor(11, 0);
   lcd.print("SLAYER");
-  delay(1000);
+  //delay(1000);
   lcd.setCursor(0, 2);
   lcd.print("INSERT COIN TO PLAY");
-  delay(2000);
+  //delay(2000);
   //Show high scores for all modes as well
 }
 
 void LCD::mode_select_screen(int curr_adc_mode)
 {
-  lcd.clear();
+//  lcd.clear();
   lcd.setCursor(5, 0);
   if(curr_adc_mode == 0){
     lcd.print("EASY Mode");
@@ -54,7 +59,7 @@ void LCD::mode_select_screen(int curr_adc_mode)
 
 void LCD::distance_set_screen(int curr_adc_mode, bool distance_status)
 {
-  lcd.clear();
+//  lcd.clear();
   lcd.setCursor(0, 0);
     if(curr_adc_mode == 0){
     lcd.print("EASY MODE SELECTED");
@@ -77,7 +82,7 @@ void LCD::distance_set_screen(int curr_adc_mode, bool distance_status)
 
 void LCD::game_play_screen(int time_left, int curr_score)
 {
-  lcd.clear();
+//  lcd.clear();
   char str[20];
   sprintf(str, "Time Remaining: %d", time_left);
   lcd.setCursor(0, 0);

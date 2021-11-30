@@ -29,7 +29,7 @@ void Target::init_target(void)
 //Turns target servo to face forward and gets time of turn
 void Target::flip_forward(void)
 {
-  servo.write(180);
+  servo.write(90);
   turn_time_millis = millis();
   flipped_forward = true;
 	photo.setPhotoresistorState(PHOTO_ACTIVE);

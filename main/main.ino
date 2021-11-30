@@ -30,10 +30,10 @@ Mode curr_mode = easy;
 
 enum States
 {
-  idle,
+  idle = 0,
   mode_select, 
   set_distance,
-  play,
+  playing,
   end_game,
   emergency_stop
 };
@@ -51,12 +51,13 @@ int mode_player_distance_inch[2] = {12, 24}; //Distance = 12in for easy, 24in fo
 int standby_turn_flag = 0;
 int standby_turn_time = 0;
 int mode_select_time = 0;
+int press_flag = 0;
 
 //Gameplay timing flags and variables
 long randNum = 0;
 int curr_score = 0;
 int time_left = 0;
-int prev_sec = 0;
+unsigned long prev_sec = 0;
 
 /***** Initialize all classes *****/
 MCP23017 mcp = MCP23017(MCP_ADDR);
@@ -66,12 +67,12 @@ LCD lcd(20, 4);
 ADS1115 ads1115_1 = ADS1115(ADS1115_I2C_ADDR_GND);
 ADS1115 ads1115_2 = ADS1115(ADS1115_I2C_ADDR_VDD);
 
-Target target1(3, ADS1115_MUX_AIN0_GND, &ads1115_1, 3000, 0);
-Target target2(5, ADS1115_MUX_AIN1_GND, &ads1115_1, 3000, 1);
-Target target3(6, ADS1115_MUX_AIN2_GND, &ads1115_1, 3000, 2);
-Target target4(9, ADS1115_MUX_AIN3_GND, &ads1115_1, 3000, 3);
-Target target5(10, ADS1115_MUX_AIN0_GND, &ads1115_2, 3000, 4);
-Target target6(11, ADS1115_MUX_AIN1_GND, &ads1115_2, 3000, 5);
+Target target1(3, ADS1115_MUX_AIN0_GND, &ads1115_1, 2700, 0);
+Target target2(5, ADS1115_MUX_AIN1_GND, &ads1115_1, 2700, 1);
+Target target3(6, ADS1115_MUX_AIN2_GND, &ads1115_1, 2700, 2);
+Target target4(9, ADS1115_MUX_AIN3_GND, &ads1115_1, 2700, 3);
+Target target5(10, ADS1115_MUX_AIN0_GND, &ads1115_2, 2700, 4);
+Target target6(11, ADS1115_MUX_AIN1_GND, &ads1115_2, 2700, 5);
 
 Photoresistor coin_photo;
 
@@ -118,18 +119,23 @@ void setup() {
   target5.flip_backward();
   target6.flip_backward();
 
-  randomSeed(analogRead(A0));
+  lcd.start_screen();
+  randomSeed(analogRead(A1));
 }
 
 void loop() {
-  if(is_estop_pressed()) {
+  if(is_estop_pressed()){
+    Serial.println("e-stop");
     curr_state = emergency_stop;
   }
   
-  switch(curr_state){
+  switch(curr_state)
+  {
     case idle:
-//      lcd.start_screen();
-      if(!standby_turn_flag) {
+      Serial.println("idle");
+      if(!standby_turn_flag && (millis() - standby_turn_time >= 5000)) {
+        Serial.println("forward");
+        lcd.clear_screen();
         target1.flip_forward();
         target2.flip_forward();
         target3.flip_forward();
@@ -138,8 +144,11 @@ void loop() {
         target6.flip_forward();
         standby_turn_flag = 1;
         standby_turn_time = millis();
+        lcd.start_screen();
       } 
-      else if(standby_turn_flag && (millis() - standby_turn_time >= 10000)) {
+      else if(standby_turn_flag && (millis() - standby_turn_time >= 5000)) {
+        Serial.println("backward");
+        lcd.clear_screen();
         target1.flip_backward();
         target2.flip_backward();
         target3.flip_backward();
@@ -147,9 +156,12 @@ void loop() {
         target5.flip_backward();
         target6.flip_backward();
         standby_turn_flag = 0;
+        standby_turn_time = millis();
+        lcd.start_screen();
       }
-
-      if(coin_photo.readADS1115() < 2700) {
+      if(is_start_pressed()) { //      if(coin_photo.readADS1115() < 2700) {
+        Serial.println("start pressed");
+        press_flag = 1;
         target1.flip_backward();
         target2.flip_backward();
         target3.flip_backward();
@@ -157,100 +169,105 @@ void loop() {
         target5.flip_backward();
         target6.flip_backward();
         standby_turn_flag = 0;
-        
+      } 
+      if(!is_start_pressed() && press_flag){
+        press_flag = 0;
         curr_state = mode_select;
         mode_select_time = millis();
-      } 
-      else {
-        curr_state = idle;
+        lcd.clear_screen();
       }
-      break;
-      
+    break;
+
     case mode_select:
+      Serial.println("mode select");
+      Serial.println(check_mode());
       if(millis() - mode_select_time >= 10000) {
-        curr_state = set_distance;
+      curr_state = set_distance;
       } 
       else {
         curr_mode = check_mode();
-  //      lcd.mode_select_screen(curr_mode);
-  
+        lcd.mode_select_screen(curr_mode);
+        
         if(is_start_pressed()) {
-          curr_state = set_distance;
+          press_flag = 1;
+          Serial.println("pressed");
         } 
-        else {
-          curr_state = mode_select;
+        if (!is_start_pressed() && press_flag == 1) {
+            press_flag = 0;
+            curr_state = set_distance;
+            lcd.clear_screen();
         }
       }
-      break;
-      
+    break;
+
     case set_distance:
-      bool distance_status = ping.is_distance_good(mode_target_forward_time[curr_mode]);
-//      lcd.distance_set_screen(curr_mode, distance_status);
-      
-      if (distance_status) {
-        time_left = 60;
-        prev_sec = millis();
-        curr_state = play;
+      Serial.println("set distance");
+      if(press_flag == 0){
+        bool distance_status = ping.is_distance_good(mode_player_distance_inch[curr_mode]);
+        lcd.distance_set_screen(curr_mode, distance_status);
+        if (distance_status == true) {
+          press_flag = 1;
+        }
+      } else {
+        if (press_flag == 1){
+          press_flag = 0;
+          curr_state = playing;
+          lcd.clear_screen();
+          time_left = 50;
+          prev_sec = millis();  
+        } 
       } 
-      else {
-        curr_state = set_distance;
-      }
-      break;
-      
-    case play:
+    break;
+
+    case playing:
       if(time_left > 0) {
         target_led_off();
+        if(millis() < prev_sec) prev_sec = millis();
         if(millis() - prev_sec >= 1000) {
           prev_sec = millis();
           time_left--;
+          lcd.clear_screen();
           lcd.game_play_screen(time_left, curr_score);
         }
-        randNum = random(63);
-
-        if((randNum & 1) && !target1.is_flipped_forward()) {
+        randNum = random(1,20);      
+        
+        if((randNum == 19) && !target1.is_flipped_forward()) {
           target1.flip_forward();  
+          Serial.println("forward 1");
         } 
         else if(target1.is_flipped_forward()) {
             if(target1.turn_time_elapsed(mode_target_forward_time[curr_mode])) {
               target1.flip_backward();
+              Serial.println("backward 1");
             } 
             else if(target1.target_hit()) {
               target1.flip_backward();
               target_led_on(target1);
               curr_score++;
+              Serial.println("shot 1");
             }
         }
 
-        if((randNum>>1 & 1) && !target2.is_flipped_forward()) {
+        if((randNum == 18) && !target2.is_flipped_forward()) {
           target2.flip_forward();  
+          Serial.println("forward 2");
         } 
         else if(target2.is_flipped_forward()) {
             if(target2.turn_time_elapsed(mode_target_forward_time[curr_mode])) {
               target2.flip_backward();
-            } 
-            else if(target2.target_hit()) {
-              target2.flip_backward();
-              target_led_on(target1);
-              curr_score++;
-            }
-        }
-
-        if((randNum>>1 & 1) && !target2.is_flipped_forward()) {
-          target2.flip_forward();  
-        } 
-        else if(target2.is_flipped_forward()) {
-            if(target2.turn_time_elapsed(mode_target_forward_time[curr_mode])) {
-              target2.flip_backward();
+              Serial.println("backward 2");
             } 
             else if(target2.target_hit()) {
               target2.flip_backward();
               target_led_on(target2);
               curr_score++;
+              Serial.println("shot 2");
             }
         }
 
-        if((randNum>>2 & 1) && !target3.is_flipped_forward()) {
+        if((randNum == 17) && !target3.is_flipped_forward()) {
           target3.flip_forward();  
+          Serial.println("forward 3");
         } 
         else if(target3.is_flipped_forward()) {
             if(target3.turn_time_elapsed(mode_target_forward_time[curr_mode])) {
@@ -263,8 +280,9 @@ void loop() {
             }
         }
 
-        if((randNum>>3 & 1) && !target4.is_flipped_forward()) {
-          target4.flip_forward();  
+        if((randNum == 16) && !target4.is_flipped_forward()) {
+          target4.flip_forward(); 
+          Serial.println("forward 4"); 
         } 
         else if(target4.is_flipped_forward()) {
             if(target4.turn_time_elapsed(mode_target_forward_time[curr_mode])) {
@@ -277,8 +295,9 @@ void loop() {
             }
         }
 
-        if((randNum>>4 & 1) && !target5.is_flipped_forward()) {
+        if((randNum == 15) && !target5.is_flipped_forward()) {
           target5.flip_forward();  
+          Serial.println("forward 5");
         } 
         else if(target5.is_flipped_forward()) {
             if(target5.turn_time_elapsed(mode_target_forward_time[curr_mode])) {
@@ -291,8 +310,9 @@ void loop() {
             }
         }
 
-        if((randNum>>5 & 1) && !target6.is_flipped_forward()) {
+        if((randNum == 14) && !target6.is_flipped_forward()) {
           target6.flip_forward();  
+          Serial.println("forward 6");
         } 
         else if(target6.is_flipped_forward()) {
             if(target6.turn_time_elapsed(mode_target_forward_time[curr_mode])) {
@@ -304,23 +324,42 @@ void loop() {
               curr_score++;
             }
         }
-      }
-      else if(time_left == 0) {
+      } else if(time_left == 0) {
+        Serial.println("game ended");
         lcd.end_game_screen(curr_score);
         curr_state = end_game;
+        lcd.clear_screen();
       }
       break;
-      
+
     case end_game:
-      target_led_reset();
-      lcd.post_game_screen(curr_score, curr_mode);
-      curr_state = idle;
-      break;
-      
+      Serial.println("Done");
+      if(press_flag == 0){
+        press_flag = 1;
+        lcd.post_game_screen(curr_score, curr_mode);
+      } else {
+        press_flag = 0;
+        curr_state = idle;
+        target1.flip_backward();
+        target2.flip_backward();
+        target3.flip_backward();
+        target4.flip_backward();
+        target5.flip_backward();
+        target6.flip_backward();
+        standby_turn_flag = 0;
+        standby_turn_time = millis();
+      }
+    break;
+    
     case emergency_stop:
-      curr_state = emergency_stop;
-      break;
+      Serial.println("emergency");
+      if(!is_estop_pressed()){
+        curr_state = idle;
+        lcd.start_screen();
+      }
+    break;    
   }
+  delay(100);
 }
 
 /********** F U N C T I O N S   D E C L A R A T I O N S **********/

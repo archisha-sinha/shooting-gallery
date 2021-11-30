@@ -15,6 +15,7 @@ class LCD
         void game_play_screen(int time_left, int curr_score);
         void end_game_screen(int curr_score);
         void post_game_screen(int curr_score, int curr_adc_mode);
+        void clear_screen(void);
         
     private:
         

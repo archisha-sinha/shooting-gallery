@@ -29,7 +29,8 @@ bool Photoresistor::getPhotoresistorState()
 bool Photoresistor::getPhotoresistorLitStatus()
 {
 	if(!Photoresistor_Active) return false;  
-  
+
+  readADS1115();
 	if(pinVal >= high_voltage)
 	{
 		Photoresistor_Active = PHOTO_UNACTIVE;
