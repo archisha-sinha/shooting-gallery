@@ -73,12 +73,19 @@ int Target::get_gpio_led_pin(void) {
 void Target::set_target_led(int led_status)
 {
   led_on_flag = led_status;
-  led_on_time = millis();
+//  led_on_time = millis();
+  Serial.print("Setting     ");
 }
 
-bool Target::led_turn_off_ok(void) {
-  if((millis() - led_on_time >= 1000) && led_on_flag) {
+bool Target::led_turn_off_ok(unsigned long led_time, unsigned long curr_time) {
+  Serial.println(led_time);
+  if((curr_time - led_time >= 1000)){
+//    Serial.println(led_on_time);
+//    Serial.print("   ");
+   if(led_on_flag) {
+    Serial.println("here");
     return true;
+    }
   }
   else {
     return false;

@@ -26,7 +26,7 @@ class Target
 		bool target_hit(void);
     int get_gpio_led_pin(void);
     void set_target_led(int led_status);
-    bool led_turn_off_ok(void);
+    bool led_turn_off_ok(unsigned long led_time, unsigned long curr_time);
     
   private:
     Servo servo;
@@ -35,7 +35,7 @@ class Target
     bool flipped_forward;
     int gpio_led_pin;
     int led_on_flag;
-    long led_on_time;
+//    unsigned long led_on_time;
 };
 
 #endif _TARGET_H

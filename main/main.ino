@@ -58,7 +58,12 @@ long randNum = 0;
 int curr_score = 0;
 int time_left = 0;
 unsigned long prev_sec = 0;
-
+unsigned long led_on_time1;
+unsigned long led_on_time2;
+unsigned long led_on_time3;
+unsigned long led_on_time4;
+unsigned long led_on_time5;
+unsigned long led_on_time6;
 /***** Initialize all classes *****/
 MCP23017 mcp = MCP23017(MCP_ADDR);
 Ping ping(13);
@@ -67,25 +72,25 @@ LCD lcd(20, 4);
 ADS1115 ads1115_1 = ADS1115(ADS1115_I2C_ADDR_GND);
 ADS1115 ads1115_2 = ADS1115(ADS1115_I2C_ADDR_VDD);
 
-Target target1(3, ADS1115_MUX_AIN0_GND, &ads1115_1, 2700, 0);
-Target target2(5, ADS1115_MUX_AIN1_GND, &ads1115_1, 2700, 1);
-Target target3(6, ADS1115_MUX_AIN2_GND, &ads1115_1, 2700, 2);
-Target target4(9, ADS1115_MUX_AIN3_GND, &ads1115_1, 2700, 3);
-Target target5(10, ADS1115_MUX_AIN0_GND, &ads1115_2, 2700, 4);
-Target target6(11, ADS1115_MUX_AIN1_GND, &ads1115_2, 2700, 5);
+Target target1(3, ADS1115_MUX_AIN0_GND, &ads1115_1, 2000, 6);
+Target target2(5, ADS1115_MUX_AIN1_GND, &ads1115_1, 2000, 1);
+Target target3(6, ADS1115_MUX_AIN2_GND, &ads1115_1, 2000, 2);
+Target target4(9, ADS1115_MUX_AIN3_GND, &ads1115_1, 2000, 3);
+Target target5(10, ADS1115_MUX_AIN0_GND, &ads1115_2, 2000, 4);
+Target target6(11, ADS1115_MUX_AIN1_GND, &ads1115_2, 2000, 5);
 
 Photoresistor coin_photo;
 
 /********** F U N C T I O N S   D E F I N I T I O N S **********/
 void mcp_init(void);
 void target_led_reset(void);
-void target_led_on(Target t);
+void target_led_on(Target t, unsigned long temp);
 void target_led_off(void);
 bool is_estop_pressed(void);
 bool is_start_pressed(void);
 int check_mode(void);
 
-/***** M A I N **********/
+/********** Z O M B I E    S L A Y E R   M A I N **********/
 void setup() {
   Serial.begin(9600);
 
@@ -103,7 +108,7 @@ void setup() {
   ads1115_2.setDataRate(ADS1115_DR_250_SPS);
   ads1115_2.setPga(ADS1115_PGA_4_096);
 
-  coin_photo.initPhotoresistor(ADS1115_MUX_AIN2_GND, &ads1115_2, 3000);
+  coin_photo.initPhotoresistor(ADS1115_MUX_AIN2_GND, &ads1115_2, 2700);
   
   target1.init_target();
   target2.init_target();
@@ -128,7 +133,6 @@ void loop() {
     Serial.println("e-stop");
     curr_state = emergency_stop;
   }
-  Serial.println(curr_state);
   switch(curr_state)
   {
     case idle:
@@ -159,7 +163,7 @@ void loop() {
         standby_turn_time = millis();
         lcd.start_screen();
       }
-      if(is_start_pressed()) { //      if(coin_photo.readADS1115() < 2700) {
+      if(coin_photo.readADS1115() < 2000) {
         Serial.println("start pressed");
         press_flag = 1;
         target1.flip_backward();
@@ -170,7 +174,7 @@ void loop() {
         target6.flip_backward();
         standby_turn_flag = 0;
       } 
-      if(!is_start_pressed() && press_flag){
+      if(press_flag){
         press_flag = 0;
         curr_state = mode_select;
         mode_select_time = millis();
@@ -243,7 +247,7 @@ void loop() {
             } 
             else if(target1.target_hit()) {
               target1.flip_backward();
-              target_led_on(target1);
+              target_led_on(target1, led_on_time1);
               curr_score++;
               Serial.println("shot 1");
             }
@@ -260,7 +264,7 @@ void loop() {
             } 
             else if(target2.target_hit()) {
               target2.flip_backward();
-              target_led_on(target2);
+              target_led_on(target2, led_on_time2);
               curr_score++;
               Serial.println("shot 2");
             }
@@ -276,7 +280,7 @@ void loop() {
             } 
             else if(target3.target_hit()) {
               target3.flip_backward();
-              target_led_on(target3);
+              target_led_on(target3, led_on_time3);
               curr_score++;
             }
         }
@@ -291,7 +295,7 @@ void loop() {
             } 
             else if(target4.target_hit()) {
               target4.flip_backward();
-              target_led_on(target4);
+              target_led_on(target4, led_on_time4);
               curr_score++;
             }
         }
@@ -306,7 +310,7 @@ void loop() {
             } 
             else if(target5.target_hit()) {
               target5.flip_backward();
-              target_led_on(target5);
+              target_led_on(target5, led_on_time5);
               curr_score++;
             }
         }
@@ -321,7 +325,7 @@ void loop() {
             } 
             else if(target6.target_hit()) {
               target6.flip_backward();
-              target_led_on(target6);
+              target_led_on(target6, led_on_time6);
               curr_score++;
             }
         }
@@ -381,36 +385,39 @@ void target_led_reset(void)
   mcp.writeRegister(MCP23017Register::GPIO_A, 0x00);
 }
 
-void target_led_on(Target t) 
+void target_led_on(Target t, unsigned long temp) 
 {
   mcp.digitalWrite(t.get_gpio_led_pin(), LED_ON);
   t.set_target_led(LED_ON);
+  temp = millis();
 }
 
 void target_led_off(void) 
 {
-  if(target1.led_turn_off_ok()) {
-    mcp.digitalWrite(target1.get_gpio_led_pin(), LED_OFF);
+  unsigned long temp = millis();
+  if(temp - led_on_time1){
+    Serial.println(led_on_time1);
+    mcp.digitalWrite(target1.get_gpio_led_pin(), 0);
     target1.set_target_led(LED_OFF);
   }
-  if(target2.led_turn_off_ok()) {
-    mcp.digitalWrite(target2.get_gpio_led_pin(), LED_OFF);
+  if(temp - led_on_time2){
+    mcp.digitalWrite(target2.get_gpio_led_pin(), 0);
     target2.set_target_led(LED_OFF);
   }
-  if(target3.led_turn_off_ok()) {
-    mcp.digitalWrite(target3.get_gpio_led_pin(), LED_OFF);
+  if(temp - led_on_time3) {
+    mcp.digitalWrite(target3.get_gpio_led_pin(), 0);
     target3.set_target_led(LED_OFF);
   }
-  if(target4.led_turn_off_ok()) {
-    mcp.digitalWrite(target4.get_gpio_led_pin(), LED_OFF);
+  if(temp - led_on_time4) {
+    mcp.digitalWrite(target4.get_gpio_led_pin(), 0);
     target4.set_target_led(LED_OFF);
   }
-  if(target5.led_turn_off_ok()) {
-    mcp.digitalWrite(target5.get_gpio_led_pin(), LED_OFF);
+  if(temp - led_on_time5) {
+    mcp.digitalWrite(target5.get_gpio_led_pin(), 0);
     target5.set_target_led(LED_OFF);
   }
-  if(target6.led_turn_off_ok()) {
-    mcp.digitalWrite(target6.get_gpio_led_pin(), LED_OFF);
+  if(temp - led_on_time6) {
+    mcp.digitalWrite(target6.get_gpio_led_pin(), 0);
     target6.set_target_led(LED_OFF);
   }
 }
