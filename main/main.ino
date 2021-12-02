@@ -16,13 +16,15 @@
 #define ESTOP_BUTTON 9 //B2
  
 //High value for mode adc ranges
-#define EASY_RANGE 500
+#define EASY_RANGE 500 //350
+//#define MEDIUM_RANGE 700
 #define HARD_RANGE 1023
 
 /********** E N U M S **********/
 enum Mode
 {
   easy = 0, 
+//  medium,
   hard
 };
 
@@ -44,8 +46,8 @@ States curr_state = idle;
 uint8_t gpio_read = 0;
 
 //Arrays for mode specific values, index arrays with curr_mode enum
-int mode_target_forward_time[2] = {5000, 3000}; //Time = 5000ms for easy, 3000ms for hard
-int mode_player_distance_inch[2] = {12, 24}; //Distance = 12in for easy, 24in for hard
+int mode_target_forward_time[2] = {10000, 5000}; //Time = 5000ms for easy, 3000ms for hard
+int mode_player_distance_inch[2] = {36, 48}; //Distance = 12in for easy, 24in for hard
 
 //Timing flags
 int standby_turn_flag = 0;
@@ -56,7 +58,7 @@ int press_flag = 0;
 //Gameplay timing flags and variables
 long randNum = 0;
 int curr_score = 0;
-int time_left = 0;
+long time_left = 300000;
 unsigned long prev_sec = 0;
 unsigned long led_on_time1;
 unsigned long led_on_time2;
@@ -72,12 +74,12 @@ LCD lcd(20, 4);
 ADS1115 ads1115_1 = ADS1115(ADS1115_I2C_ADDR_GND);
 ADS1115 ads1115_2 = ADS1115(ADS1115_I2C_ADDR_VDD);
 
-Target target1(3, ADS1115_MUX_AIN0_GND, &ads1115_1, 2000, 6);
-Target target2(5, ADS1115_MUX_AIN1_GND, &ads1115_1, 2000, 1);
-Target target3(6, ADS1115_MUX_AIN2_GND, &ads1115_1, 2000, 2);
-Target target4(9, ADS1115_MUX_AIN3_GND, &ads1115_1, 2000, 3);
-Target target5(10, ADS1115_MUX_AIN0_GND, &ads1115_2, 2000, 4);
-Target target6(11, ADS1115_MUX_AIN1_GND, &ads1115_2, 2000, 5);
+Target target1(3, ADS1115_MUX_AIN0_GND, &ads1115_1, 1500, 6);
+Target target2(5, ADS1115_MUX_AIN1_GND, &ads1115_1, 1000, 1);
+Target target3(6, ADS1115_MUX_AIN2_GND, &ads1115_1, 1500, 2);
+Target target4(9, ADS1115_MUX_AIN3_GND, &ads1115_1, 1500, 3);
+Target target5(10, ADS1115_MUX_AIN0_GND, &ads1115_2, 1500, 4);
+Target target6(11, ADS1115_MUX_AIN1_GND, &ads1115_2, 1500, 5);
 
 Photoresistor coin_photo;
 
@@ -126,6 +128,7 @@ void setup() {
 
   lcd.start_screen();
   randomSeed(analogRead(A1));
+  Serial.println("hello");
 }
 
 void loop() {
@@ -187,7 +190,9 @@ void loop() {
       Serial.println("mode select");
       Serial.println(check_mode());
       if(millis() - mode_select_time >= 10000) {
+        press_flag = 0;
         curr_state = set_distance;
+        lcd.clear_screen();
       } 
       else {
         curr_mode = check_mode();
@@ -235,15 +240,13 @@ void loop() {
           lcd.game_play_screen(time_left, curr_score);
         }
         randNum = random(1,20);      
-        
+        Serial.println(target2.photo.readADS1115());
         if((randNum == 19) && !target1.is_flipped_forward()) {
           target1.flip_forward();  
-          Serial.println("forward 1");
         } 
         else if(target1.is_flipped_forward()) {
             if(target1.turn_time_elapsed(mode_target_forward_time[curr_mode])) {
               target1.flip_backward();
-              Serial.println("backward 1");
             } 
             else if(target1.target_hit()) {
               target1.flip_backward();
@@ -255,12 +258,10 @@ void loop() {
 
         if((randNum == 18) && !target2.is_flipped_forward()) {
           target2.flip_forward();  
-          Serial.println("forward 2");
         } 
         else if(target2.is_flipped_forward()) {
             if(target2.turn_time_elapsed(mode_target_forward_time[curr_mode])) {
               target2.flip_backward();
-              Serial.println("backward 2");
             } 
             else if(target2.target_hit()) {
               target2.flip_backward();
@@ -272,7 +273,6 @@ void loop() {
 
         if((randNum == 17) && !target3.is_flipped_forward()) {
           target3.flip_forward();  
-          Serial.println("forward 3");
         } 
         else if(target3.is_flipped_forward()) {
             if(target3.turn_time_elapsed(mode_target_forward_time[curr_mode])) {
@@ -282,12 +282,12 @@ void loop() {
               target3.flip_backward();
               target_led_on(target3, led_on_time3);
               curr_score++;
+              Serial.println("shot 3");
             }
         }
 
         if((randNum == 16) && !target4.is_flipped_forward()) {
           target4.flip_forward(); 
-          Serial.println("forward 4"); 
         } 
         else if(target4.is_flipped_forward()) {
             if(target4.turn_time_elapsed(mode_target_forward_time[curr_mode])) {
@@ -297,12 +297,12 @@ void loop() {
               target4.flip_backward();
               target_led_on(target4, led_on_time4);
               curr_score++;
+              Serial.println("shot 4");
             }
         }
 
         if((randNum == 15) && !target5.is_flipped_forward()) {
           target5.flip_forward();  
-          Serial.println("forward 5");
         } 
         else if(target5.is_flipped_forward()) {
             if(target5.turn_time_elapsed(mode_target_forward_time[curr_mode])) {
@@ -312,12 +312,12 @@ void loop() {
               target5.flip_backward();
               target_led_on(target5, led_on_time5);
               curr_score++;
+              Serial.println("shot 5");
             }
         }
 
         if((randNum == 14) && !target6.is_flipped_forward()) {
           target6.flip_forward();  
-          Serial.println("forward 6");
         } 
         else if(target6.is_flipped_forward()) {
             if(target6.turn_time_elapsed(mode_target_forward_time[curr_mode])) {
@@ -327,6 +327,7 @@ void loop() {
               target6.flip_backward();
               target_led_on(target6, led_on_time6);
               curr_score++;
+              Serial.println("shot 6");
             }
         }
       } else if(time_left == 0) {
@@ -352,6 +353,8 @@ void loop() {
         target4.flip_backward();
         target5.flip_backward();
         target6.flip_backward();
+        press_flag = 0;
+        lcd.clear_screen();
         lcd.start_screen();
       }
     break;
@@ -396,7 +399,6 @@ void target_led_off(void)
 {
   unsigned long temp = millis();
   if(temp - led_on_time1){
-    Serial.println(led_on_time1);
     mcp.digitalWrite(target1.get_gpio_led_pin(), 0);
     target1.set_target_led(LED_OFF);
   }
@@ -439,6 +441,11 @@ int check_mode(void)
     curr_mode = easy;
   } else if (adc_val > EASY_RANGE && adc_val <= HARD_RANGE) {
     curr_mode = hard; 
-  }
+  } 
+//  else if (adc_val > EASY_RANGE && adc_val <= MEDIUM_RANGE) {
+//    curr_mode = medium; 
+//  } else if (adc_val > MEDIUM_RANGE && adc_val <= HARD_RANGE) {
+//    curr_mode = hard; 
+//  }
   return curr_mode;
 }

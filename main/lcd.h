@@ -23,6 +23,8 @@ class LCD
         int disp_row;
         int mode_high_scores[2];
         int mode_last_scores[2];
+//        int mode_high_scores[3];
+//        int mode_last_scores[3];
 };
 
 #endif

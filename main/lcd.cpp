@@ -46,7 +46,12 @@ void LCD::mode_select_screen(int curr_adc_mode)
     lcd.print("EASY Mode");
   } else if(curr_adc_mode == 1) {
     lcd.print("HARD Mode");
-  }
+  } 
+//    else if(curr_adc_mode == 1) {
+//    lcd.print("MEDIUM Mode");
+//  } else if(curr_adc_mode == 2) {
+//    lcd.print("HARD Mode");
+//  }
   
   lcd.setCursor(0, 2);
   char str[20];
@@ -66,6 +71,11 @@ void LCD::distance_set_screen(int curr_adc_mode, bool distance_status)
   } else if(curr_adc_mode == 1) {
     lcd.print("HARD MODE SELECTED");
   }
+//    else if(curr_adc_mode == 1) {
+//    lcd.print("MEDIUM MODE SELECTED");
+//  } else if(curr_adc_mode == 2) {
+//    lcd.print("HARD MODE SELECTED");
+//  }
   
   if (!distance_status) {
     lcd.setCursor(5, 2);

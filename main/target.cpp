@@ -29,16 +29,17 @@ void Target::init_target(void)
 //Turns target servo to face forward and gets time of turn
 void Target::flip_forward(void)
 {
-  servo.write(90);
+  servo.write(180);
   turn_time_millis = millis();
   flipped_forward = true;
 	photo.setPhotoresistorState(PHOTO_ACTIVE);
 }
 
+
 //Turns target servo to face forward
 void Target::flip_backward(void)
 {
-  servo.write(0);
+  servo.write(90);
   flipped_forward = false;
 	photo.setPhotoresistorState(PHOTO_UNACTIVE);
 }
@@ -73,15 +74,11 @@ int Target::get_gpio_led_pin(void) {
 void Target::set_target_led(int led_status)
 {
   led_on_flag = led_status;
-//  led_on_time = millis();
-  Serial.print("Setting     ");
 }
 
 bool Target::led_turn_off_ok(unsigned long led_time, unsigned long curr_time) {
   Serial.println(led_time);
   if((curr_time - led_time >= 1000)){
-//    Serial.println(led_on_time);
-//    Serial.print("   ");
    if(led_on_flag) {
     Serial.println("here");
     return true;
