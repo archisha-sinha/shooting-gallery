@@ -23,7 +23,7 @@ class Target
     void flip_backward(void);
     bool turn_time_elapsed(unsigned long des_delay);
     bool is_flipped_forward(void);
-		bool target_hit(void);
+    bool target_hit(void);
     int get_gpio_led_pin(void);
     void set_target_led(int led_status);
     bool led_turn_off_ok(unsigned long led_time, unsigned long curr_time);
